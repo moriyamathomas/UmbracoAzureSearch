@@ -10,26 +10,26 @@ namespace Moriyama.AzureSearch.Umbraco.Application.Models
 		public string FieldName { get; set; }
 		public int Boost { get; set; }
 		public Nullable<ScoringFunctionInterpolation> Interpolation { get; set; }
-        public string Params { get; set; }
+        public object Params { get; set; }
 
 		public ScoringFunction GetEffectiveScoringFunction()
 		{
 			switch (this.Type)
 			{
 				case AzureSearchScoringFunctionType.freshness:
-                    var freshnessSettings = JsonConvert.DeserializeObject<Freshness>(this.Params);
+                    var freshnessSettings = JsonConvert.DeserializeObject<Freshness>(JsonConvert.SerializeObject(this.Params));
 					var fressnessParams = new FreshnessScoringParameters(TimeSpan.Parse(freshnessSettings.BoostingDuration));
 					return new FreshnessScoringFunction(this.FieldName, this.Boost, fressnessParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.magnitude:
-                    var magnitudeSettings = JsonConvert.DeserializeObject<Magnitude>(this.Params);
+                    var magnitudeSettings = JsonConvert.DeserializeObject<Magnitude>(JsonConvert.SerializeObject(this.Params));
                     var magnitudeParams = new MagnitudeScoringParameters(magnitudeSettings.BoostingRangeStart, magnitudeSettings.BoostingRangeEnd, magnitudeSettings.ConstantBoostBeyondRange);
 					return new MagnitudeScoringFunction(this.FieldName, this.Boost, magnitudeParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.distance:
-                    var distanceSettings = JsonConvert.DeserializeObject<Distance>(this.Params);
+                    var distanceSettings = JsonConvert.DeserializeObject<Distance>(JsonConvert.SerializeObject(this.Params));
                     var distanceParams = new DistanceScoringParameters(distanceSettings.ReferencePointParameter, distanceSettings.BoostingDistance);
 					return new DistanceScoringFunction(this.FieldName, this.Boost, distanceParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.tag:
-                    var tagSettings = JsonConvert.DeserializeObject<Tag>(this.Params);
+                    var tagSettings = JsonConvert.DeserializeObject<Tag>(JsonConvert.SerializeObject(this.Params));
                     var tagParams = new TagScoringParameters(tagSettings.TagsParameter);
 					return new TagScoringFunction(this.FieldName, this.Boost, tagParams, this.Interpolation);
 				default:
