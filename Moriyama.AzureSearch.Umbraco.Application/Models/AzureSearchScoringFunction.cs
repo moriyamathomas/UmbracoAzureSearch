@@ -1,39 +1,36 @@
 ﻿using Microsoft.Azure.Search.Models;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moriyama.AzureSearch.Umbraco.Application.Models
 {
-	public class AzureSearchScoringFunction
+    public class AzureSearchScoringFunction
 	{
 		public AzureSearchScoringFunctionType Type { get; set; }
 		public string FieldName { get; set; }
 		public int Boost { get; set; }
 		public Nullable<ScoringFunctionInterpolation> Interpolation { get; set; }
-
-		public Freshness Freshness { get; set; }
-		public Magnitude Magnitude { get; set; }
-		public Distance Distance { get; set; }
-		public Tag Tag { get; set; }
+        public object Params { get; set; }
 
 		public ScoringFunction GetEffectiveScoringFunction()
 		{
 			switch (this.Type)
 			{
 				case AzureSearchScoringFunctionType.freshness:
-					var fressnessParams = new FreshnessScoringParameters(TimeSpan.Parse(this.Freshness.BoostingDuration));
+                    var freshnessSettings = JsonConvert.DeserializeObject<Freshness>(JsonConvert.SerializeObject(this.Params));
+					var fressnessParams = new FreshnessScoringParameters(TimeSpan.Parse(freshnessSettings.BoostingDuration));
 					return new FreshnessScoringFunction(this.FieldName, this.Boost, fressnessParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.magnitude:
-					var magnitudeParams = new MagnitudeScoringParameters(this.Magnitude.BoostingRangeStart, this.Magnitude.BoostingRangeEnd, this.Magnitude.ConstantBoostBeyondRange);
+                    var magnitudeSettings = JsonConvert.DeserializeObject<Magnitude>(JsonConvert.SerializeObject(this.Params));
+                    var magnitudeParams = new MagnitudeScoringParameters(magnitudeSettings.BoostingRangeStart, magnitudeSettings.BoostingRangeEnd, magnitudeSettings.ConstantBoostBeyondRange);
 					return new MagnitudeScoringFunction(this.FieldName, this.Boost, magnitudeParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.distance:
-					var distanceParams = new DistanceScoringParameters(this.Distance.ReferencePointParameter, this.Distance.BoostingDistance);
+                    var distanceSettings = JsonConvert.DeserializeObject<Distance>(JsonConvert.SerializeObject(this.Params));
+                    var distanceParams = new DistanceScoringParameters(distanceSettings.ReferencePointParameter, distanceSettings.BoostingDistance);
 					return new DistanceScoringFunction(this.FieldName, this.Boost, distanceParams, this.Interpolation);
 				case AzureSearchScoringFunctionType.tag:
-					var tagParams = new TagScoringParameters(this.Tag.TagsParameter);
+                    var tagSettings = JsonConvert.DeserializeObject<Tag>(JsonConvert.SerializeObject(this.Params));
+                    var tagParams = new TagScoringParameters(tagSettings.TagsParameter);
 					return new TagScoringFunction(this.FieldName, this.Boost, tagParams, this.Interpolation);
 				default:
 					throw new NotSupportedException($"{this.Type}");
@@ -78,7 +75,6 @@ namespace Moriyama.AzureSearch.Umbraco.Application.Models
 	{
 		public string TagsParameter { get; set; }
 	}
-
 
 	#endregion
 }
